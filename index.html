@@ -1,0 +1,109 @@
+<!doctype html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Mes Commandes</title>
+<style>
+:root{--navy:#102a52;--blue:#1769e0;--bg:#f5f8fc;--text:#12264a;--muted:#6d7d98;--border:#e1e8f2}
+*{box-sizing:border-box}body{margin:0;font-family:Inter,system-ui,-apple-system,Segoe UI,sans-serif;background:var(--bg);color:var(--text)}
+.app{display:flex;min-height:100vh}.side{width:250px;background:linear-gradient(180deg,#173660,#0d2446);color:white;padding:26px 14px;flex-shrink:0}.brand{font-size:24px;font-weight:800;display:flex;gap:12px;align-items:center;margin:0 12px 8px}.cube{font-size:38px}.tag{margin:0 12px 30px;color:#c9d8ef;line-height:1.4}.nav button{width:100%;border:0;background:transparent;color:#d8e4f5;text-align:left;padding:14px 14px;border-radius:10px;font-size:16px;cursor:pointer;margin:3px 0}.nav button.active,.nav button:hover{background:#2771df;color:#fff}.main{padding:28px;flex:1;overflow:auto}.top{display:flex;justify-content:space-between;align-items:center;gap:20px}.top h1{margin:0;font-size:32px}.sub{color:#617392;margin:4px 0 22px;font-size:17px}.stats{display:grid;grid-template-columns:repeat(6,minmax(130px,1fr));gap:12px;margin-bottom:20px}.stat{background:#fff;border:1px solid var(--border);border-radius:15px;padding:15px}.stat b{font-size:27px;display:block}.stat span{color:var(--muted);font-size:13px}.card{background:#fff;border:1px solid var(--border);border-radius:16px;padding:18px}.bar{display:flex;gap:10px;align-items:center;margin-bottom:12px}.search{flex:1;padding:13px 15px;border:1px solid #ccd7e7;border-radius:10px;font-size:14px}.primary{background:var(--blue);color:white;border:0;border-radius:10px;padding:13px 18px;font-weight:700;cursor:pointer}.filters{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin-bottom:15px}.filters select{padding:11px;border:1px solid #ccd7e7;border-radius:9px;background:white}.tablewrap{overflow:auto}table{width:100%;border-collapse:collapse;min-width:1050px}th,td{padding:13px 10px;border-top:1px solid #edf1f6;text-align:left;font-size:13px;white-space:nowrap}th{color:#1b3156;background:#f8fafc}.site{font-weight:700}.status{padding:7px 10px;border-radius:20px;font-weight:700;font-size:12px;display:inline-block}.prep{background:#fff0d7;color:#a55b00}.ship{background:#e5f0ff;color:#1769c9}.delivery{background:#eee4ff;color:#6c25b9}.done{background:#def7e8;color:#16834c}.late{background:#ffe3e3;color:#b62020}.action{border:0;background:#eef5ff;color:#1262d1;border-radius:8px;padding:8px 11px;cursor:pointer;font-weight:700}.danger{background:#fff0f0;color:#c62828}.empty{text-align:center;padding:35px;color:var(--muted)}.modal{position:fixed;inset:0;background:#0b1d3788;display:none;align-items:center;justify-content:center;padding:20px}.modal.show{display:flex}.dialog{background:#fff;border-radius:18px;width:min(620px,100%);padding:24px;box-shadow:0 20px 60px #0003}.dialog h2{margin-top:0}.form{display:grid;grid-template-columns:1fr 1fr;gap:12px}.field{display:flex;flex-direction:column;gap:6px}.field.full{grid-column:1/-1}.field label{font-size:13px;font-weight:700}.field input,.field select{padding:11px;border:1px solid #ccd7e7;border-radius:9px}.dialogfoot{display:flex;justify-content:flex-end;gap:10px;margin-top:18px}.secondary{border:1px solid #ccd7e7;background:white;padding:11px 16px;border-radius:9px;cursor:pointer}
+@media(max-width:900px){.side{width:190px}.stats{grid-template-columns:repeat(3,1fr)}.filters{grid-template-columns:1fr 1fr}}@media(max-width:650px){.app{display:block}.side{width:100%;padding:12px}.tag,.nav button{display:none}.brand{margin-bottom:0}.main{padding:16px}.stats{grid-template-columns:repeat(2,1fr)}.filters{grid-template-columns:1fr}.top{display:block}.form{grid-template-columns:1fr}}
+</style>
+</head>
+<body>
+<div id="gmail-connect-panel" style="margin:16px 0;padding:16px;border:1px solid #d9e1ec;border-radius:12px;background:#f7f9fc;font-family:Arial,sans-serif">
+  <strong>📧 Connexion Gmail</strong>
+  <p style="margin:8px 0;color:#475569">Connexion en lecture seule pour rechercher vos confirmations de commande.</p>
+  <button id="connect-gmail-btn" type="button" style="padding:10px 14px;border:0;border-radius:8px;background:#173b68;color:white;font-weight:600;cursor:pointer">Connecter Gmail</button>
+  <span id="gmail-status" style="margin-left:10px;color:#475569"></span>
+</div>
+<script>
+window.MES_COMMANDES_GMAIL = {
+  clientId: "",
+  scope: "https://www.googleapis.com/auth/gmail.readonly"
+};
+document.getElementById("connect-gmail-btn").addEventListener("click", function () {
+  const s = document.getElementById("gmail-status");
+  if (!window.MES_COMMANDES_GMAIL.clientId) {
+    s.textContent = "Configuration Gmail à terminer après la mise en ligne.";
+    s.style.color = "#b45309";
+    return;
+  }
+  if (!window.google || !google.accounts || !google.accounts.oauth2) {
+    s.textContent = "Service Google non chargé.";
+    return;
+  }
+  const tokenClient = google.accounts.oauth2.initTokenClient({
+    client_id: window.MES_COMMANDES_GMAIL.clientId,
+    scope: window.MES_COMMANDES_GMAIL.scope,
+    callback: (response) => {
+      if (response && response.access_token) {
+        window.MES_COMMANDES_GMAIL.accessToken = response.access_token;
+        s.textContent = "Gmail connecté en lecture seule.";
+        s.style.color = "#15803d";
+      }
+    }
+  });
+  tokenClient.requestAccessToken({prompt: "consent"});
+});
+</script>
+<script src="https://accounts.google.com/gsi/client" async defer></script>
+
+<div class="app">
+<aside class="side"><div class="brand"><span class="cube">📦</span>Mes Commandes</div><p class="tag">Toutes vos commandes au même endroit !</p><div class="nav">
+<button class="active">🏠 Accueil</button><button onclick="document.getElementById('search').focus()">📦 Mes commandes</button><button onclick="openModal()">➕ Ajouter une commande</button><button onclick="alert('Les statistiques détaillées seront ajoutées dans une prochaine version.')">📊 Statistiques</button><button onclick="alert('Les paramètres seront ajoutés dans une prochaine version.')">⚙️ Paramètres</button>
+</div></aside>
+<main class="main">
+<div class="top"><div><h1>Bienvenue !</h1><p class="sub">Suivez facilement toutes vos commandes en un seul endroit.</p></div><button class="primary" onclick="openModal()">＋ Ajouter une commande</button></div>
+<div class="stats" id="stats"></div>
+<section class="card"><div class="bar"><input id="search" class="search" placeholder="Rechercher un site, un numéro de commande ou un numéro de suivi…" oninput="render()"></div>
+<div class="filters"><select id="statusFilter" onchange="render()"><option value="">Tous les statuts</option><option>En préparation</option><option>Expédiée</option><option>En livraison</option><option>Livrée</option><option>En retard</option></select><select id="siteFilter" onchange="render()"><option value="">Tous les sites</option></select><select id="carrierFilter" onchange="render()"><option value="">Tous les transporteurs</option></select><select id="sortFilter" onchange="render()"><option value="date-desc">Date de commande (plus récente)</option><option value="delivery-asc">Livraison prévue (plus proche)</option><option value="price-desc">Prix total (décroissant)</option><option value="price-asc">Prix total (croissant)</option></select></div>
+<div class="tablewrap"><table><thead><tr><th>Site / Marchand</th><th>N° de commande</th><th>Date</th><th>Livraison prévue</th><th>Transporteur</th><th>N° de suivi</th><th>Prix total</th><th>Statut</th><th>Actions</th></tr></thead><tbody id="rows"></tbody></table></div></section>
+</main></div>
+<div class="modal" id="modal"><div class="dialog"><h2 id="modalTitle">Ajouter une commande</h2><form id="form" class="form">
+<div class="field"><label>Site / Marchand *</label><input id="site" required placeholder="Amazon"></div>
+<div class="field"><label>N° de commande *</label><input id="order" required></div>
+<div class="field"><label>Date de commande</label><input id="orderDate" type="date"></div>
+<div class="field"><label>Livraison prévue</label><input id="deliveryDate" type="date"></div>
+<div class="field"><label>Transporteur</label><input id="carrier" placeholder="Colissimo"></div>
+<div class="field"><label>N° de suivi</label><input id="tracking"></div>
+<div class="field"><label>Prix total (€)</label><input id="price" type="number" min="0" step="0.01" placeholder="49.99"></div>
+<div class="field"><label>Statut</label><select id="status"><option>En préparation</option><option>Expédiée</option><option>En livraison</option><option>Livrée</option><option>En retard</option></select></div>
+<div class="field full"><label>Lien de suivi (facultatif)</label><input id="trackingUrl" type="url" placeholder="https://…"></div>
+</form><div class="dialogfoot"><button class="secondary" onclick="closeModal()">Annuler</button><button class="primary" onclick="saveOrder()">Enregistrer</button></div></div></div>
+<script>
+const seed=[
+{site:"Amazon",order:"402-1234567-1234567",orderDate:"2026-09-11",deliveryDate:"2026-09-14",carrier:"Colissimo",tracking:"8A12345678901",price:49.99,status:"En livraison",trackingUrl:"https://www.laposte.fr/outils/suivre-vos-envois"},
+{site:"Cdiscount",order:"CDIS-9876543",orderDate:"2026-09-10",deliveryDate:"2026-09-13",carrier:"Chronopost",tracking:"6Y98765432109",price:79.90,status:"Expédiée",trackingUrl:"https://www.chronopost.fr/fr/suivi-colis"},
+{site:"Fnac",order:"FNAC123456",orderDate:"2026-09-08",deliveryDate:"2026-09-12",carrier:"DPD",tracking:"053987654321",price:129.00,status:"Livrée",trackingUrl:"https://www.dpd.com/fr/fr/suivi-colis/"},
+{site:"Veepee",order:"VEE-567890",orderDate:"2026-09-07",deliveryDate:"2026-09-15",carrier:"Mondial Relay",tracking:"987654321098",price:39.99,status:"En préparation",trackingUrl:"https://www.mondialrelay.fr/suivi-de-colis/"},
+{site:"Shein",order:"SHN-3456789",orderDate:"2026-09-05",deliveryDate:"2026-09-11",carrier:"La Poste",tracking:"1Z999AA1234567890",price:25.50,status:"Livrée",trackingUrl:"https://www.laposte.fr/outils/suivre-vos-envois"},
+{site:"AliExpress",order:"AE-778899",orderDate:"2026-09-01",deliveryDate:"2026-09-10",carrier:"Cainiao",tracking:"LP006789123456",price:18.75,status:"Expédiée",trackingUrl:"https://global.cainiao.com/"}
+];
+let orders=JSON.parse(localStorage.getItem("mesCommandes")||"null")||seed, editIndex=null;
+function save(){localStorage.setItem("mesCommandes",JSON.stringify(orders))}
+function money(v){return Number(v||0).toLocaleString("fr-FR",{style:"currency",currency:"EUR"})}
+function fmt(d){if(!d)return "—";return new Date(d+"T12:00:00").toLocaleDateString("fr-FR")}
+function cls(s){return {"En préparation":"prep","Expédiée":"ship","En livraison":"delivery","Livrée":"done","En retard":"late"}[s]||""}
+function render(){
+ const q=document.getElementById("search").value.toLowerCase(), sf=document.getElementById("statusFilter").value, site=document.getElementById("siteFilter").value, cf=document.getElementById("carrierFilter").value, sort=document.getElementById("sortFilter").value;
+ const sites=[...new Set(orders.map(o=>o.site).filter(Boolean))].sort(), carriers=[...new Set(orders.map(o=>o.carrier).filter(Boolean))].sort();
+ siteFilter.innerHTML='<option value="">Tous les sites</option>'+sites.map(x=>`<option ${x===site?"selected":""}>${x}</option>`).join("");
+ carrierFilter.innerHTML='<option value="">Tous les transporteurs</option>'+carriers.map(x=>`<option ${x===cf?"selected":""}>${x}</option>`).join("");
+ let list=orders.map((o,i)=>({...o,i})).filter(o=>(!q||[o.site,o.order,o.tracking,o.carrier].join(" ").toLowerCase().includes(q))&&(!sf||o.status===sf)&&(!site||o.site===site)&&(!cf||o.carrier===cf));
+ list.sort((a,b)=>sort==="price-desc"?b.price-a.price:sort==="price-asc"?a.price-b.price:sort==="delivery-asc"?(a.deliveryDate||"").localeCompare(b.deliveryDate||""):(b.orderDate||"").localeCompare(a.orderDate||""));
+ rows.innerHTML=list.length?list.map(o=>`<tr><td class="site">${esc(o.site)}</td><td>${esc(o.order)}</td><td>${fmt(o.orderDate)}</td><td>${fmt(o.deliveryDate)}</td><td>${esc(o.carrier||"—")}</td><td>${esc(o.tracking||"—")}</td><td><b>${money(o.price)}</b></td><td><span class="status ${cls(o.status)}">${esc(o.status)}</span></td><td>${o.trackingUrl?`<button class="action" onclick="window.open('${escAttr(o.trackingUrl)}','_blank')">↗ Suivre</button>`:""} <button class="action" onclick="editOrder(${o.i})">✏️</button> <button class="action danger" onclick="deleteOrder(${o.i})">🗑️</button></td></tr>`).join(""):`<tr><td colspan="9" class="empty">Aucune commande trouvée.</td></tr>`;
+ const count=s=>orders.filter(o=>o.status===s).length, total=orders.length, late=count("En retard");
+ stats.innerHTML=[["📦",total,"commandes au total"],["🕐",count("En préparation"),"en préparation"],["🚚",count("Expédiée"),"expédiées"],["📬",count("En livraison"),"en livraison"],["✅",count("Livrée"),"livrées"],["⚠️",late,"en retard"]].map(x=>`<div class="stat"><span>${x[0]}</span><b>${x[1]}</b><span>${x[2]}</span></div>`).join("");
+}
+function esc(s){return String(s??"").replace(/[&<>"']/g,m=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[m]))}
+function escAttr(s){return String(s??"").replace(/'/g,"&#39;")}
+function openModal(i=null){editIndex=i;modal.classList.add("show");modalTitle.textContent=i===null?"Ajouter une commande":"Modifier la commande";let o=i===null?{site:"",order:"",orderDate:new Date().toISOString().slice(0,10),deliveryDate:"",carrier:"",tracking:"",price:"",status:"En préparation",trackingUrl:""}:orders[i];["site","order","orderDate","deliveryDate","carrier","tracking","price","status","trackingUrl"].forEach(k=>document.getElementById(k).value=o[k]??"")}
+function closeModal(){modal.classList.remove("show")}
+function saveOrder(){const f={site:site.value.trim(),order:order.value.trim(),orderDate:orderDate.value,deliveryDate:deliveryDate.value,carrier:carrier.value.trim(),tracking:tracking.value.trim(),price:Number(price.value||0),status:status.value,trackingUrl:trackingUrl.value.trim()};if(!f.site||!f.order){alert("Le site et le numéro de commande sont obligatoires.");return}if(editIndex===null)orders.push(f);else orders[editIndex]=f;save();closeModal();render()}
+function editOrder(i){openModal(i)}
+function deleteOrder(i){if(confirm("Supprimer cette commande ?")){orders.splice(i,1);save();render()}}
+form.addEventListener("submit",e=>{e.preventDefault();saveOrder()});modal.addEventListener("click",e=>{if(e.target===modal)closeModal()});render();
+</script>
+</body></html>
